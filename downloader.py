@@ -1,4 +1,5 @@
-import tkinter as tk, tkinter.scrolledtext
+import os
+import tkinter as tk, tkinter.filedialog
 import urllib.request
 from bs4 import BeautifulSoup
 
@@ -53,6 +54,10 @@ class Application(tk.Frame):
         self.quit.pack(side="bottom")
 
     def save_selected(self):
+        filename = tk.filedialog.asksaveasfilename(initialdir = os.getcwd(),
+                                                        initialfile = "downloaed_songs",
+                                                        title = "Select file",
+                                                        defaultextension=".txt")
         for (key, value) in self.songs_states.items():
             if value[0].get() == 1:
                 print(key)
