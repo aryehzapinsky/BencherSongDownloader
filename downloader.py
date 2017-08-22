@@ -1,9 +1,15 @@
 import os
+import asyncio
 import tkinter as tk, tkinter.filedialog
 import urllib.request
 from bs4 import BeautifulSoup
+from collections import namedtuple
+import tqdm
 
-def song_generator(path):
+SITE_BASE = "http://www.zemirotdatabase.org/"
+Song = namedtuple("Song", "name value")
+
+def song_list_generator(path):
     """
     This function yields song_name and url address for each song in the list.
     Currently the first result is a link
@@ -13,6 +19,30 @@ def song_generator(path):
         content = soup.find("div", {"id":"content"})
         yield from ((x.getText(),x.find('a').get('href'))
                     for x in content.findAll('li'))
+
+
+@asyncio.coroutine
+def download_coro(filename, songs):
+    CONCUR_REQ = 5
+    semaphore = asyncio.Semaphore(CONCUR_REQ)
+    to_do = [download_song(song, semaphore) for song in songs]
+
+    to_do_iter = asyncio.as_completed(to_do)
+    to_do_iter = tqdm.tqdm(to_do_iter, total=len(to_do))
+    with open(filename, "w") as file:
+        for future in to_do_iter:
+            result = yield from future
+            file.write(result.name + "\n"*2 +
+                       result.value + "\n"*3)
+
+@asyncio.coroutine
+def download_song(song, semaphore):
+    with (yield from semaphore):
+        with urllib.request.urlopen(SITE_BASE + song.value) as response:
+            soup = BeautifulSoup(response.read(), 'html.parser')
+            content = soup.find("div", {"id":"hebrew"})
+            return Song(song.name, content.getText())
+
 
 class Application(tk.Frame):
     def __init__(self, master=None):
@@ -34,7 +64,7 @@ class Application(tk.Frame):
         text.pack(side="left", fill="both", expand=True)
         self.song_frame.pack()
 
-        for item in song_generator("http://www.zemirotdatabase.org/song_index.php"):
+        for item in song_list_generator(SITE_BASE+"song_index.php"):
             song, path = item
             indicator = tk.IntVar()
             self.songs_states.setdefault(song, (indicator, path))
@@ -55,12 +85,14 @@ class Application(tk.Frame):
 
     def save_selected(self):
         filename = tk.filedialog.asksaveasfilename(initialdir = os.getcwd(),
-                                                        initialfile = "downloaed_songs",
+                                                        initialfile = "downloaded_songs",
                                                         title = "Select file",
                                                         defaultextension=".txt")
-        for (key, value) in self.songs_states.items():
-            if value[0].get() == 1:
-                print(key)
+        loop = asyncio.get_event_loop()
+        coro = download_coro(filename, (Song(key, value[1])
+                             for (key, value) in self.songs_states.items()
+                             if value[0].get() == 1))
+        loop.run_until_complete(coro)
 
 
 if __name__ == "__main__":
