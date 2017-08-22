@@ -1,0 +1,20 @@
+This program helps users generate a file of Hebrew songs downloaded
+from http://www.zemirotdatabase.org/. The program generates a list of
+songs found on the website and displays all of the titles. Select
+which songs will be downloaded by clicking the checkboxes. Click the
+"Download songs" to download the songs. A progress tracker appears in
+the command line this should in the future also be a GUI
+element. Click "QUIT" button when downloads have finished.
+
+
+Example file output:
+Ahavti אהבתי
+
+אהבתי כי ישמע יהוה את קולי תחנוני
+
+
+Al Tira (Ki Ya'ashir ish) אל תירא כי יעשר איש
+
+אַל תִּירָא כִּי יַעֲשִׁר אִישׁ כִּי יִרְבֶּה כְּבוֹד בֵּיתוֹ. כִּי לֹא בְמוֹתוֹ יִקַּח הַכֹּל לֹא יֵרֵד
+אַחֲרָיו כְּבוֹדוֹ. (תהלים מט)
+
